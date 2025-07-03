@@ -1,7 +1,9 @@
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.border.*;
+import java.awt.geom.RoundRectangle2D;
 
 public class PasswordAnalyzerGUI extends JFrame {
     private PasswordAnalyzer analyzer;
@@ -11,108 +13,298 @@ public class PasswordAnalyzerGUI extends JFrame {
     private JProgressBar strengthBar;
     private JLabel strengthLabel;
 
+    // Modern color scheme
+    private static final Color PRIMARY_COLOR = new Color(64, 128, 255);
+    private static final Color SECONDARY_COLOR = new Color(245, 247, 250);
+    private static final Color SUCCESS_COLOR = new Color(34, 197, 94);
+    private static final Color WARNING_COLOR = new Color(251, 146, 60);
+    private static final Color DANGER_COLOR = new Color(239, 68, 68);
+    private static final Color DARK_TEXT = new Color(31, 41, 55);
+    private static final Color LIGHT_TEXT = new Color(107, 114, 128);
+    private static final Color BORDER_COLOR = new Color(229, 231, 235);
+
     public PasswordAnalyzerGUI() {
         // Initialize analyzer and policy
         analyzer = new PasswordAnalyzer();
         policy = new SecurityPolicy();
 
-        // Set up the frame
-        setTitle("Password Analyzer");
-        setSize(800, 700);
+        // Set up the frame with modern styling
+        setTitle("Password Security Analyzer");
+        setSize(900, 750);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Create components
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        // Set background color
+        getContentPane().setBackground(SECONDARY_COLOR);
 
-        // Title panel
-        JPanel titlePanel = new JPanel(new BorderLayout());
-        JLabel titleLabel = new JLabel("PASSWORD ANALYZER", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        JLabel subtitleLabel = new JLabel("Based on ISO 22301 Security Standards", JLabel.CENTER);
-        subtitleLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        // Create components with modern styling
+        JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
+        mainPanel.setBackground(SECONDARY_COLOR);
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
+
+        // Enhanced title panel with gradient-like effect
+        JPanel titlePanel = createTitlePanel();
+
+        // Modern input panel
+        JPanel inputPanel = createInputPanel();
+
+        // Enhanced results area
+        JScrollPane scrollPane = createResultsPanel();
+
+        // Modern button panel
+        JPanel buttonPanel = createButtonPanel();
+
+        // Create a split pane with custom styling
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, inputPanel, scrollPane);
+        splitPane.setResizeWeight(0.25);
+        splitPane.setDividerLocation(200);
+        splitPane.setBackground(SECONDARY_COLOR);
+        splitPane.setBorder(null);
+        splitPane.setDividerSize(8);
+
+        // Add all components to main panel
+        mainPanel.add(titlePanel, BorderLayout.NORTH);
+        mainPanel.add(splitPane, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Add main panel to frame
+        add(mainPanel);
+
+        // Set up event listeners
+        setupEventListeners();
+    }
+
+    private JPanel createTitlePanel() {
+        JPanel titlePanel = new JPanel(new BorderLayout(0, 10));
+        titlePanel.setBackground(SECONDARY_COLOR);
+        titlePanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+
+        // Main title with modern styling
+        JLabel titleLabel = new JLabel("🔐 Password Security Analyzer", JLabel.CENTER);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        titleLabel.setForeground(DARK_TEXT);
+
+        // Subtitle with lighter text
+        JLabel subtitleLabel = new JLabel("Enterprise-grade security analysis based on ISO 22301 standards", JLabel.CENTER);
+        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        subtitleLabel.setForeground(LIGHT_TEXT);
 
         titlePanel.add(titleLabel, BorderLayout.CENTER);
         titlePanel.add(subtitleLabel, BorderLayout.SOUTH);
 
-        // Input panel
-        JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
-        inputPanel.setBorder(BorderFactory.createTitledBorder("Password Analysis"));
+        return titlePanel;
+    }
 
-        JPanel passwordPanel = new JPanel(new BorderLayout(5, 5));
-        passwordPanel.add(new JLabel("Enter password: "), BorderLayout.WEST);
-        passwordField = new JTextField(20);
-        passwordPanel.add(passwordField, BorderLayout.CENTER);
+    private JPanel createInputPanel() {
+        JPanel inputPanel = new JPanel(new BorderLayout(0, 15));
+        inputPanel.setBackground(Color.WHITE);
+        inputPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR, 1),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
 
-        JButton analyzeButton = new JButton("Analyze");
-        passwordPanel.add(analyzeButton, BorderLayout.EAST);
+        // Password input section
+        JPanel passwordPanel = createPasswordInputPanel();
 
-        // Strength indicator panel
-        JPanel strengthPanel = new JPanel(new BorderLayout(5, 5));
-
-        // Strength meter with improved visibility
-        strengthBar = new JProgressBar(0, 100);
-        strengthBar.setStringPainted(false); // Don't paint string on the bar itself
-        strengthBar.setBorderPainted(true);
-        strengthBar.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
-
-        // Separate label to show strength level
-        strengthLabel = new JLabel("Password Strength: Not Analyzed", JLabel.CENTER);
-        strengthLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        strengthLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-
-        strengthPanel.add(strengthLabel, BorderLayout.NORTH);
-        strengthPanel.add(strengthBar, BorderLayout.CENTER);
+        // Strength indicator section
+        JPanel strengthPanel = createStrengthPanel();
 
         inputPanel.add(passwordPanel, BorderLayout.NORTH);
         inputPanel.add(strengthPanel, BorderLayout.CENTER);
 
-        // Results area
+        return inputPanel;
+    }
+
+    private JPanel createPasswordInputPanel() {
+        JPanel passwordPanel = new JPanel(new BorderLayout(10, 5));
+        passwordPanel.setBackground(Color.WHITE);
+
+        JLabel passwordLabel = new JLabel("Enter Password:");
+        passwordLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        passwordLabel.setForeground(DARK_TEXT);
+
+        passwordField = new JTextField(20);
+        passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        passwordField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR, 1),
+                BorderFactory.createEmptyBorder(8, 12, 8, 12)
+        ));
+        passwordField.setPreferredSize(new Dimension(0, 40));
+
+        JButton analyzeButton = createStyledButton("Analyze Password", PRIMARY_COLOR);
+        analyzeButton.setPreferredSize(new Dimension(150, 40));
+
+        passwordPanel.add(passwordLabel, BorderLayout.WEST);
+        passwordPanel.add(passwordField, BorderLayout.CENTER);
+        passwordPanel.add(analyzeButton, BorderLayout.EAST);
+
+        return passwordPanel;
+    }
+
+    private JPanel createStrengthPanel() {
+        JPanel strengthPanel = new JPanel(new BorderLayout(0, 10));
+        strengthPanel.setBackground(Color.WHITE);
+        strengthPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
+
+        // Strength label
+        strengthLabel = new JLabel("Password Strength: Not Analyzed", JLabel.CENTER);
+        strengthLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        strengthLabel.setForeground(LIGHT_TEXT);
+
+        // Custom strength bar
+        strengthBar = new JProgressBar(0, 100) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // Draw background
+                g2d.setColor(new Color(229, 231, 235));
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+
+                // Draw progress
+                if (getValue() > 0) {
+                    int width = (int) ((double) getValue() / getMaximum() * getWidth());
+                    g2d.setColor(getForeground());
+                    g2d.fillRoundRect(0, 0, width, getHeight(), 10, 10);
+                }
+
+                g2d.dispose();
+            }
+        };
+        strengthBar.setStringPainted(false);
+        strengthBar.setBorderPainted(false);
+        strengthBar.setPreferredSize(new Dimension(0, 20));
+        strengthBar.setOpaque(false);
+
+        strengthPanel.add(strengthLabel, BorderLayout.NORTH);
+        strengthPanel.add(strengthBar, BorderLayout.CENTER);
+
+        return strengthPanel;
+    }
+
+    private JScrollPane createResultsPanel() {
         resultArea = new JTextArea(20, 50);
         resultArea.setEditable(false);
-        resultArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        resultArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
         resultArea.setLineWrap(true);
         resultArea.setWrapStyleWord(true);
-        JScrollPane scrollPane = new JScrollPane(resultArea);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Analysis Results"));
-        scrollPane.setPreferredSize(new Dimension(750, 400));
+        resultArea.setBackground(Color.WHITE);
+        resultArea.setForeground(DARK_TEXT);
+        resultArea.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // Button panel for additional options
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 3, 10, 0));
-        JButton policyButton = new JButton("View Security Policy");
-        JButton exampleButton = new JButton("Test Sample Passwords");
-        JButton generateButton = new JButton("Generate Strong Password");
+        JScrollPane scrollPane = new JScrollPane(resultArea);
+        scrollPane.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_COLOR, 1),
+                BorderFactory.createEmptyBorder(0, 0, 0, 0)
+        ));
+        scrollPane.setPreferredSize(new Dimension(850, 400));
+        scrollPane.getViewport().setBackground(Color.WHITE);
+
+        return scrollPane;
+    }
+
+    private JPanel createButtonPanel() {
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 3, 15, 0));
+        buttonPanel.setBackground(SECONDARY_COLOR);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+
+        JButton policyButton = createStyledButton("📋 View Security Policy", new Color(99, 102, 241));
+        JButton exampleButton = createStyledButton("🧪 Test Sample Passwords", new Color(168, 85, 247));
+        JButton generateButton = createStyledButton("⚡ Generate Strong Password", SUCCESS_COLOR);
 
         buttonPanel.add(policyButton);
         buttonPanel.add(exampleButton);
         buttonPanel.add(generateButton);
 
-        // Create a split pane to allow resizing the results area
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
-                inputPanel, scrollPane);
-        splitPane.setResizeWeight(0.2);
-        splitPane.setDividerLocation(120); // Increased to accommodate strength label
+        return buttonPanel;
+    }
 
-        // Add all components to main panel
-        mainPanel.add(titlePanel, BorderLayout.NORTH);
-        mainPanel.add(splitPane, BorderLayout.CENTER);
+    private JButton createStyledButton(String text, Color color) {
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g.create();
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Add action listeners
-        analyzeButton.addActionListener(e -> analyzePassword());
-        policyButton.addActionListener(e -> displaySecurityPolicy());
-        exampleButton.addActionListener(e -> testSamplePasswords());
-        generateButton.addActionListener(e -> generatePassword());
+                // Button background
+                if (getModel().isPressed()) {
+                    g2d.setColor(color.darker());
+                } else if (getModel().isRollover()) {
+                    g2d.setColor(color.brighter());
+                } else {
+                    g2d.setColor(color);
+                }
 
-        // Add main panel to frame
-        add(mainPanel, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+
+                // Button text
+                g2d.setColor(Color.WHITE);
+                g2d.setFont(getFont());
+                FontMetrics fm = g2d.getFontMetrics();
+                int textWidth = fm.stringWidth(getText());
+                int textHeight = fm.getHeight();
+                int x = (getWidth() - textWidth) / 2;
+                int y = (getHeight() + textHeight) / 2 - fm.getDescent();
+                g2d.drawString(getText(), x, y);
+
+                g2d.dispose();
+            }
+        };
+
+        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        button.setForeground(Color.WHITE);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setFocusPainted(false);
+        button.setPreferredSize(new Dimension(0, 45));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        return button;
+    }
+
+    private void setupEventListeners() {
+        // Find buttons by their text content
+        Component[] components = getAllComponents(this);
+        for (Component comp : components) {
+            if (comp instanceof JButton) {
+                JButton button = (JButton) comp;
+                String text = button.getText();
+
+                if (text.contains("Analyze")) {
+                    button.addActionListener(e -> analyzePassword());
+                } else if (text.contains("Security Policy")) {
+                    button.addActionListener(e -> displaySecurityPolicy());
+                } else if (text.contains("Sample")) {
+                    button.addActionListener(e -> testSamplePasswords());
+                } else if (text.contains("Generate")) {
+                    button.addActionListener(e -> generatePassword());
+                }
+            }
+        }
+
+        // Add Enter key listener to password field
+        passwordField.addActionListener(e -> analyzePassword());
+    }
+
+    private Component[] getAllComponents(Container container) {
+        java.util.List<Component> components = new java.util.ArrayList<>();
+        for (Component comp : container.getComponents()) {
+            components.add(comp);
+            if (comp instanceof Container) {
+                Component[] subComponents = getAllComponents((Container) comp);
+                for (Component subComp : subComponents) {
+                    components.add(subComp);
+                }
+            }
+        }
+        return components.toArray(new Component[0]);
     }
 
     private void analyzePassword() {
         String password = passwordField.getText();
         if (password.isEmpty()) {
-            resultArea.setText("Please enter a password to analyze.");
+            resultArea.setText("⚠️ Please enter a password to analyze.");
             return;
         }
 
@@ -121,122 +313,117 @@ public class PasswordAnalyzerGUI extends JFrame {
         String level = analyzer.getStrengthLevel(score);
         boolean compliant = policy.isCompliant(password, analyzer);
 
-        // Update strength bar with better visibility
+        // Update strength bar with modern colors
         strengthBar.setValue(score);
 
-        // Set colors based on strength
         Color barColor;
-        Color textColor;
+        String emoji;
         if (score < 40) {
-            barColor = new Color(255, 102, 102); // Lighter red
-            textColor = new Color(153, 0, 0);    // Darker red
-            strengthLabel.setText("Password Strength: WEAK (" + score + "/100)");
+            barColor = DANGER_COLOR;
+            emoji = "🔴";
+            strengthLabel.setText(emoji + " Password Strength: WEAK (" + score + "/100)");
         } else if (score < 70) {
-            barColor = new Color(255, 204, 0);   // Lighter yellow
-            textColor = new Color(153, 102, 0);  // Darker yellow/orange
-            strengthLabel.setText("Password Strength: MODERATE (" + score + "/100)");
+            barColor = WARNING_COLOR;
+            emoji = "🟡";
+            strengthLabel.setText(emoji + " Password Strength: MODERATE (" + score + "/100)");
         } else {
-            barColor = new Color(102, 204, 0);   // Lighter green
-            textColor = new Color(0, 102, 0);    // Darker green
-            strengthLabel.setText("Password Strength: STRONG (" + score + "/100)");
+            barColor = SUCCESS_COLOR;
+            emoji = "🟢";
+            strengthLabel.setText(emoji + " Password Strength: STRONG (" + score + "/100)");
         }
 
         strengthBar.setForeground(barColor);
-        strengthLabel.setForeground(textColor);
+        strengthLabel.setForeground(barColor);
 
-        // Add a border with the same color to emphasize the strength level
-        strengthLabel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 2, 0, textColor),
-                BorderFactory.createEmptyBorder(5, 0, 5, 0)
-        ));
-
-        // Generate report
+        // Generate enhanced report
         StringBuilder report = new StringBuilder();
-        report.append("=== PASSWORD ANALYSIS REPORT ===\n\n");
-        report.append(String.format("Password: %s\n", password));
-        report.append(String.format("Strength Score: %d/100\n", score));
-        report.append(String.format("Strength Level: %s\n", level));
-        report.append(String.format("Policy Compliant: %s\n\n", compliant ? "YES" : "NO"));
+        report.append("🔐 PASSWORD ANALYSIS REPORT\n");
+        report.append("═══════════════════════════════════════════════════════════════\n\n");
+        report.append("📝 Password: ").append(password).append("\n");
+        report.append("📊 Strength Score: ").append(score).append("/100\n");
+        report.append("📈 Strength Level: ").append(level).append("\n");
+        report.append("✅ Policy Compliant: ").append(compliant ? "YES" : "NO").append("\n\n");
 
-        report.append("=== DETAILED ANALYSIS ===\n");
-        report.append(String.format("Length: %d characters %s\n",
-                password.length(),
-                analyzer.checkMinimumLength(password, SecurityPolicy.MINIMUM_LENGTH) ? "✓" : "✗"));
-        report.append(String.format("Contains uppercase: %s\n",
-                analyzer.hasUppercase(password) ? "✓" : "✗"));
-        report.append(String.format("Contains lowercase: %s\n",
-                analyzer.hasLowercase(password) ? "✓" : "✗"));
-        report.append(String.format("Contains numbers: %s\n",
-                analyzer.hasNumbers(password) ? "✓" : "✗"));
-        report.append(String.format("Contains special chars: %s\n",
-                analyzer.hasSpecialCharacters(password) ? "✓" : "✗"));
-        report.append(String.format("Common password: %s\n",
-                analyzer.isCommonPassword(password) ? "YES ✗" : "NO ✓"));
+        report.append("🔍 DETAILED ANALYSIS\n");
+        report.append("─────────────────────────────────────────────────────────────\n");
+        report.append("📏 Length: ").append(password.length()).append(" characters ")
+                .append(analyzer.checkMinimumLength(password, SecurityPolicy.MINIMUM_LENGTH) ? "✅" : "❌").append("\n");
+        report.append("🔤 Uppercase letters: ")
+                .append(analyzer.hasUppercase(password) ? "✅" : "❌").append("\n");
+        report.append("🔡 Lowercase letters: ")
+                .append(analyzer.hasLowercase(password) ? "✅" : "❌").append("\n");
+        report.append("🔢 Numbers: ")
+                .append(analyzer.hasNumbers(password) ? "✅" : "❌").append("\n");
+        report.append("🔣 Special characters: ")
+                .append(analyzer.hasSpecialCharacters(password) ? "✅" : "❌").append("\n");
+        report.append("🚫 Common password: ")
+                .append(analyzer.isCommonPassword(password) ? "YES ❌" : "NO ✅").append("\n");
 
         // Add recommendations if not compliant
         if (!compliant) {
-            report.append("\n=== RECOMMENDATIONS ===\n");
+            report.append("\n💡 RECOMMENDATIONS FOR IMPROVEMENT\n");
+            report.append("─────────────────────────────────────────────────────────────\n");
             if (!analyzer.checkMinimumLength(password, SecurityPolicy.MINIMUM_LENGTH)) {
-                report.append("- Increase password length to at least " +
-                        SecurityPolicy.MINIMUM_LENGTH + " characters\n");
+                report.append("• 📏 Increase password length to at least ")
+                        .append(SecurityPolicy.MINIMUM_LENGTH).append(" characters\n");
             }
             if (!analyzer.hasUppercase(password)) {
-                report.append("- Add uppercase letters (A-Z)\n");
+                report.append("• 🔤 Add uppercase letters (A-Z)\n");
             }
             if (!analyzer.hasLowercase(password)) {
-                report.append("- Add lowercase letters (a-z)\n");
+                report.append("• 🔡 Add lowercase letters (a-z)\n");
             }
             if (!analyzer.hasNumbers(password)) {
-                report.append("- Add numbers (0-9)\n");
+                report.append("• 🔢 Add numbers (0-9)\n");
             }
             if (!analyzer.hasSpecialCharacters(password)) {
-                report.append("- Add special characters (!@#$%^&*...)\n");
+                report.append("• 🔣 Add special characters (!@#$%^&*...)\n");
             }
             if (analyzer.isCommonPassword(password)) {
-                report.append("- Avoid common passwords - use something unique\n");
+                report.append("• 🚫 Avoid common passwords - use something unique\n");
             }
+        } else {
+            report.append("\n🎉 EXCELLENT! Your password meets all security requirements!\n");
         }
 
         resultArea.setText(report.toString());
-        resultArea.setCaretPosition(0); // Scroll to top
+        resultArea.setCaretPosition(0);
     }
 
     private void displaySecurityPolicy() {
-        // Reset strength indicator to default
         strengthBar.setValue(0);
-        strengthLabel.setText("Password Strength: Not Analyzed");
-        strengthLabel.setForeground(Color.BLACK);
-        strengthLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+        strengthLabel.setText("📋 Security Policy Display Mode");
+        strengthLabel.setForeground(PRIMARY_COLOR);
 
         StringBuilder policy = new StringBuilder();
-        policy.append("=== ORGANIZATIONAL SECURITY POLICY ===\n");
-        policy.append("Based on ISO 22301 Standards\n");
-        policy.append("Defined by GCS (Governance Cyber Security) Team\n\n");
+        policy.append("📋 ORGANIZATIONAL SECURITY POLICY\n");
+        policy.append("═══════════════════════════════════════════════════════════════\n");
+        policy.append("🏢 Based on ISO 22301 Standards\n");
+        policy.append("🛡️ Defined by GCS (Governance Cyber Security) Team\n\n");
 
-        policy.append("Password Requirements:\n");
-        policy.append("• Minimum length: " + SecurityPolicy.MINIMUM_LENGTH + " characters\n");
-        policy.append("• Must contain uppercase letters: " +
-                (SecurityPolicy.REQUIRE_UPPERCASE ? "YES" : "NO") + "\n");
-        policy.append("• Must contain lowercase letters: " +
-                (SecurityPolicy.REQUIRE_LOWERCASE ? "YES" : "NO") + "\n");
-        policy.append("• Must contain numbers: " +
-                (SecurityPolicy.REQUIRE_NUMBERS ? "YES" : "NO") + "\n");
-        policy.append("• Must contain special characters: " +
-                (SecurityPolicy.REQUIRE_SPECIAL_CHARS ? "YES" : "NO") + "\n");
-        policy.append("• Minimum security score required: " +
-                SecurityPolicy.MINIMUM_SCORE_REQUIRED + "/100\n");
-        policy.append("• Cannot be a common/weak password\n");
+        policy.append("📜 PASSWORD REQUIREMENTS:\n");
+        policy.append("─────────────────────────────────────────────────────────────\n");
+        policy.append("• 📏 Minimum length: ").append(SecurityPolicy.MINIMUM_LENGTH).append(" characters\n");
+        policy.append("• 🔤 Must contain uppercase letters: ")
+                .append(SecurityPolicy.REQUIRE_UPPERCASE ? "✅ YES" : "❌ NO").append("\n");
+        policy.append("• 🔡 Must contain lowercase letters: ")
+                .append(SecurityPolicy.REQUIRE_LOWERCASE ? "✅ YES" : "❌ NO").append("\n");
+        policy.append("• 🔢 Must contain numbers: ")
+                .append(SecurityPolicy.REQUIRE_NUMBERS ? "✅ YES" : "❌ NO").append("\n");
+        policy.append("• 🔣 Must contain special characters: ")
+                .append(SecurityPolicy.REQUIRE_SPECIAL_CHARS ? "✅ YES" : "❌ NO").append("\n");
+        policy.append("• 📊 Minimum security score required: ")
+                .append(SecurityPolicy.MINIMUM_SCORE_REQUIRED).append("/100\n");
+        policy.append("• 🚫 Cannot be a common/weak password\n");
 
         resultArea.setText(policy.toString());
         resultArea.setCaretPosition(0);
     }
 
     private void testSamplePasswords() {
-        // Reset strength indicator to default
         strengthBar.setValue(0);
-        strengthLabel.setText("Password Strength: Sample Testing Mode");
-        strengthLabel.setForeground(Color.BLUE);
-        strengthLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+        strengthLabel.setText("🧪 Sample Testing Mode");
+        strengthLabel.setForeground(new Color(168, 85, 247));
 
         String[] testPasswords = {
                 "password",           // Very weak
@@ -247,21 +434,24 @@ public class PasswordAnalyzerGUI extends JFrame {
         };
 
         StringBuilder results = new StringBuilder();
-        results.append("=== SAMPLE PASSWORD ANALYSIS ===\n\n");
+        results.append("🧪 SAMPLE PASSWORD ANALYSIS\n");
+        results.append("═══════════════════════════════════════════════════════════════\n\n");
         results.append(String.format("%-20s | %-8s | %-12s | %s\n",
                 "Password", "Score", "Level", "Compliant"));
-        results.append("--------------------------------------------------------------\n");
+        results.append("───────────────────────────────────────────────────────────────\n");
 
         for (String pwd : testPasswords) {
             int score = analyzer.calculateStrengthScore(pwd);
             String level = analyzer.getStrengthLevel(score);
             boolean compliant = policy.isCompliant(pwd, analyzer);
+            String status = compliant ? "✅ YES" : "❌ NO";
 
             results.append(String.format("%-20s | %3d/100  | %-12s | %s\n",
-                    pwd, score, level, compliant ? "YES" : "NO"));
+                    pwd, score, level, status));
         }
 
-        results.append("\nNote: This demonstrates how the analyzer evaluates different passwords.");
+        results.append("\n💡 This demonstrates how the analyzer evaluates different password strengths.\n");
+        results.append("🔍 Try analyzing these passwords individually for detailed breakdowns!");
 
         resultArea.setText(results.toString());
         resultArea.setCaretPosition(0);
@@ -302,25 +492,36 @@ public class PasswordAnalyzerGUI extends JFrame {
         // Update strength meter
         int score = analyzer.calculateStrengthScore(generatedPassword);
         strengthBar.setValue(score);
-        strengthBar.setForeground(new Color(102, 204, 0)); // Light green
+        strengthBar.setForeground(SUCCESS_COLOR);
 
         // Update strength label
-        strengthLabel.setText("Password Strength: STRONG (" + score + "/100)");
-        strengthLabel.setForeground(new Color(0, 102, 0)); // Dark green
-        strengthLabel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(0, 102, 0)),
-                BorderFactory.createEmptyBorder(5, 0, 5, 0)
-        ));
+        strengthLabel.setText("🟢 Password Strength: STRONG (" + score + "/100)");
+        strengthLabel.setForeground(SUCCESS_COLOR);
 
-        resultArea.setText("Generated strong password: " + generatedPassword +
-                "\n\nThis password meets all security requirements.\n" +
-                "Click 'Analyze' to see the detailed analysis.");
+        StringBuilder result = new StringBuilder();
+        result.append("⚡ STRONG PASSWORD GENERATED\n");
+        result.append("═══════════════════════════════════════════════════════════════\n\n");
+        result.append("🔑 Generated Password: ").append(generatedPassword).append("\n\n");
+        result.append("✅ This password meets all security requirements:\n");
+        result.append("• 📏 Sufficient length (12+ characters)\n");
+        result.append("• 🔤 Contains uppercase letters\n");
+        result.append("• 🔡 Contains lowercase letters\n");
+        result.append("• 🔢 Contains numbers\n");
+        result.append("• 🔣 Contains special characters\n");
+        result.append("• 🚫 Not a common password\n\n");
+        result.append("💡 Click 'Analyze Password' to see the detailed security analysis!");
+
+        resultArea.setText(result.toString());
     }
 
     public static void main(String[] args) {
-        // Use the system look and feel
+        // Set system look and feel with modern enhancements
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+            // Modern UI enhancements
+            System.setProperty("awt.useSystemAAFontSettings", "on");
+            System.setProperty("swing.aatext", "true");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -331,4 +532,5 @@ public class PasswordAnalyzerGUI extends JFrame {
             app.setVisible(true);
         });
     }
+
 }
